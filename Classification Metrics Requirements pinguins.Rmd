@@ -1,0 +1,73 @@
+---
+title: "Classification Model Performance"
+author: "chingiz rabdanov"
+date: "2026-02-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+{r setup, message=FALSE, warning=FALSE}
+
+# Load libraries
+
+library(ggplot2) library(dplyr)
+
+# Load the dataset
+df <- read.csv("penguin_predictions.csv")
+
+# make a graphic
+ggplot(df, aes(x = as.factor(sex))) +
+  geom_bar(fill = "steelblue", color = "black") +
+  labs(title = "Actual Sex Distribution", x = "Sex", y = "Count") +
+  theme_minimal()
+
+# Function to calculate metrics
+get_metrics <- function(t) {
+  # Create predictions based on threshold t
+  df_temp <- df %>%
+    mutate(pred_class = ifelse(.pred_female > t, 1, 0))
+  
+  # Set labels based on your data format
+  actual_f <- if(is.numeric(df$sex[1])) 1 else "female"
+  actual_m <- if(is.numeric(df$sex[1])) 0 else "male"
+  
+  # Components of Confusion Matrix
+  TP <- sum(df_temp$pred_class == 1 & df_temp$sex == actual_f)
+  TN <- sum(df_temp$pred_class == 0 & df_temp$sex == actual_m)
+  FP <- sum(df_temp$pred_class == 1 & df_temp$sex == actual_m)
+  FN <- sum(df_temp$pred_class == 0 & df_temp$sex == actual_f)
+  
+  # Metrics
+  acc <- (TP + TN) / nrow(df_temp)
+  prec <- ifelse((TP + FP) == 0, 0, TP / (TP + FP))
+  rec <- TP / (TP + FN)
+  
+  return(data.frame(Threshold = t, Accuracy = acc, Precision = prec, Recall = rec))
+}
+
+# final results table
+results <- bind_rows(get_metrics(0.2), get_metrics(0.5), get_metrics(0.8))
+knitr::kable(results, digits = 4)
