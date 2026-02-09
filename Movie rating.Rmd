@@ -1,0 +1,66 @@
+---
+title: "SQL"
+author: "chingiz rabdanov"
+date: "2026-02-09"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+# install.packages("tidyverse")
+library(tidyverse)
+# reading csv file
+df <- read_csv("quarry__Name_movie_rating.csv")
+
+# We extract the names that have become "Alex", "Troy", "5" (my mistake from SQL ,because i named columns like a troy, alex, rating 5)
+headers <- colnames(df)
+ 
+# We add them back to the table as the first row.
+df_fixed <- rbind(headers, df)
+ 
+# fixing column's name
+colnames(df_fixed) <- c("user_name", "movie_title", "rating")
+
+# We are removing the line numbers if they have become misaligned.
+rownames(df_fixed) <- NULL
+ 
+# check data
+glimpse(df)   # Показывает типы столбцов и первые значения
+summary(df)   # Базовая статистика по каждому столбцу
+# change empty on 0
+df_clean <- df_fixed %>%
+# We are converting the rating into a number (the text will become NA if there was an error).
+  mutate(rating = as.numeric(rating)) %>%
+# Data cleaning: replacing missing values with 0.
+  mutate(rating = replace_na(rating, 0))
+# We are verifying that the rating is now <dbl> (a number).
+glimpse(df_clean) 
+summary_info <- df_clean %>%
+summarise(total_records = n(),average_rating = mean(rating, na.rm = TRUE))
+print(summary_info)
+# concept matrix
+user_item_matrix <- df_clean %>%
+pivot_wider(names_from = movie_title, values_from = rating)
+print(user_item_matrix)
